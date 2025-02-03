@@ -1,9 +1,10 @@
 import json
 import subprocess
-import requests
+from logging import ERROR
+
+import ffmpeg
 import speech_recognition as sr
 from pydub import AudioSegment
-from pydub.playback import play
 import API
 
 # Ensure dependencies are installed
@@ -11,9 +12,10 @@ subprocess.run(["pip", "install", "SpeechRecognition", "pydub", "requests", "pya
 subprocess.run(["pip", "install", "ffmpeg-python"])  # Ensure ffmpeg is installed
 
 FILE_NAME = "output.mp3"
+CONVERTED_FILE = "output.wav"  # If needed
 
 def speak(text):
-    """Convert text to speech and play it."""
+    """Convert text to speech and play it using ffmpeg."""
     client = API.get_tts_client()
     options = API.get_tts_options()
 
@@ -22,8 +24,12 @@ def speak(text):
             audio_file.write(chunk)
 
     print("Playing response...")
-    audio = AudioSegment.from_file(FILE_NAME, format="mp3")  # Convert if needed
-    play(audio)  # Proper playback function
+
+    # Convert MP3 to WAV using ffmpeg (optional)
+    ffmpeg.input(FILE_NAME).output(CONVERTED_FILE).run(overwrite_output=True)
+
+    # Play audio using ffmpeg's ffplay
+    subprocess.run(["ffplay", "-nodisp", "-autoexit", CONVERTED_FILE], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 def listen():
     """Convert speech to text using Wit.ai (API key required)."""
@@ -45,11 +51,14 @@ def listen():
         return ""
 
 # Main loop
-while True:
-    command = listen()
-    if "exit" in command:
-        speak("Goodbye!")
-        break
-    elif command:
-        response = API.query_ollama(command)
-        speak(response)
+try:
+    while True:
+        command = listen()
+        if "exit" in command:
+            speak("Goodbye!")
+            exit()
+        else:
+            response = API.query_ollama(command)
+            speak(response)
+except Exception:
+    print("ERROR")

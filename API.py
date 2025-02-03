@@ -3,7 +3,7 @@ from pyht import Client
 from pyht.client import TTSOptions
 
 # API Configuration
-URL = "http://localhost:3000/api"
+URL = "http://tools.tlcp.com:3000/api" # CONNECTED BY LOCAL TWINGATE
 API_KEY = ""
 WIT_AI_KEY = "LKA6ZJ7RFXFC4A7H6WUXCV2R4AAVBZTZ"
 
