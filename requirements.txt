@@ -1,0 +1,9 @@
+SpeechRecognition
+pydub
+requests
+pyaudio
+numpy
+sounddevice
+pyht
+ffmpeg-python
+pyttsx3

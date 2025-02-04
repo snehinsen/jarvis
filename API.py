@@ -4,22 +4,22 @@ from pyht.client import TTSOptions
 
 # API Configuration
 URL = "http://tools.tlcp.com:3000/api" # CONNECTED BY LOCAL TWINGATE
-API_KEY = ""
-WIT_AI_KEY = "LKA6ZJ7RFXFC4A7H6WUXCV2R4AAVBZTZ"
+LLM_API_KEY = ""
+WIT_API_KEY = ""
 
 # Load API keys from file
 with open("env.key", "r") as key_file:
-    API_KEY = key_file.readline().strip()
-    WIT_AI_KEY = key_file.readline().strip()
-    print(f"AI API KEY: {API_KEY}")
-    print(f"WIT")
+    LLM_API_KEY = key_file.readline().strip()
+    WIT_API_KEY = key_file.readline().strip()
+    print(f"AI API KEY: {LLM_API_KEY}")
+    print(f"WIT: {WIT_API_KEY}")
 
 def query_ollama(prompt):
     """Send prompt to OpenWebUI API and get response."""
     url = f"{URL}/chat/completions"
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {API_KEY}",
+        "Authorization": f"Bearer {LLM_API_KEY}",
         "Accept": "application/json"
     }
     data = {

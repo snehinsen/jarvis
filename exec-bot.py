@@ -1,31 +1,14 @@
 import subprocess
 
 # Ensure dependencies are installed
-subprocess.run(["pip", "install", "-r", "requirements.txt"])
+subprocess.run(["pip", "ins tall", "-r", "requirements.txt"])
 
+import pyttsx3
 import speech_recognition as sr
-
-import ffmpeg
 
 import API
 
 FILE_NAME = "output.mp3"
-
-def speak(text):
-    client = API.get_tts_client()
-    options = API.get_tts_options()
-
-    with open(FILE_NAME, "wb") as audio_file:
-        for chunk in client.tts(
-                text=text,
-                options=options,
-                voice_engine='PlayDialog-http'):
-            audio_file.write(chunk)
-
-    print("Playing response...")
-
-    # Play audio using ffmpeg's ffplay
-    subprocess.run(["./ffmpeg/win/bin/ffplay.exe", "-nodisp", "-autoexit", CONVERTED_FILE], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 def listen():
     recognizer = sr.Recognizer()
@@ -49,12 +32,12 @@ def listen():
 # Main loop
 while True:
     command = listen()
-    if "exit" in command:
-        speak("Goodbye!")
+    if "exit" in command.lower():
+        pyttsx3.speak("Goodbye!")
         exit()
     elif command == "" :
         pass
     else:
         response = API.query_ollama(command)
         print(response)
-        speak(response)
+        pyttsx3.speak(response)
