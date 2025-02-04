@@ -1,0 +1,6 @@
+./.gitignore
+.idea
+.idea/***
+output.mp3
+output.wav
+env.key
