@@ -1,8 +1,5 @@
 import subprocess
 
-# Ensure dependencies are installed
-subprocess.run(["pip", "ins tall", "-r", "requirements.txt"])
-
 import pyttsx3
 import speech_recognition as sr
 

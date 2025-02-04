@@ -1,8 +1,5 @@
 import subprocess
 
-# Ensure dependencies are installed
-subprocess.run(["pip", "install", "-r", "requirements.txt"])
-
 import speech_recognition as sr
 
 import ffmpeg
