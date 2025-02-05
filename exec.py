@@ -37,13 +37,10 @@ def listen():
         print(f"You said: {userInput}")
         return userInput
     except sr.UnknownValueError:
-        print("Sorry, I didn't get that.")
         return ""
     except sr.RequestError:
         print("Speech recognition service is down.")
         return ""
-
-# Main loop
 while True:
     command = listen()
     if "exit" in command:

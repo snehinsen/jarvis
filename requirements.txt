@@ -7,3 +7,5 @@ sounddevice
 pyht
 ffmpeg-python
 pyttsx3
+openwakeword
+onnxruntime
