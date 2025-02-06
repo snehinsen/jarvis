@@ -2,14 +2,12 @@ import subprocess
 import openwakeword.utils
 import pyaudio
 import pyttsx3
-import speech_recognition as sr
-import numpy as np
-
 from openwakeword.model import Model
 
 openwakeword.utils.download_models()
 
 import API
+from audio import listen
 
 FILE_NAME = "output.mp3"
 
@@ -17,9 +15,8 @@ FILE_NAME = "output.mp3"
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 16000
-CHUNK = 1280  # Small chunk size for real-time detection
+CHUNK = 1280
 
-# Initialize PyAudio for microphone input
 audioDriver = pyaudio.PyAudio()
 mic_stream = (
     audioDriver.open(
@@ -39,34 +36,23 @@ model = Model(
     inference_framework="onnx"
 )
 
+def on_start():
+    while True:
+        # Listen for the wake word (exact match)
+        command = listen().lower()  # Assuming listen() is already handling speech recognition
 
-def listen():
-    recognizer = sr.Recognizer()
-    with sr.Microphone() as source:
-        print("Listening...")
-        recognizer.adjust_for_ambient_noise(source)
-        audio = recognizer.listen(source)
+        if command == wake_word.lower():  # Exact match for "hey jarvis"
+            print("Wake Word Detected")
+            while True:
+                command = listen()
+                if "exit" in command.lower():  # Allow for an exit command
+                    break
+                elif command:
+                    response = API.query_ollama(command)
+                    print(response)
+                    pyttsx3.speak(response)
+        elif command.lower() == "shut down jarvis":
+            exit()
+    on_start()
 
-    try:
-        userInput = recognizer.recognize_wit(audio, key=API.WIT_API_KEY)
-        print(f"You said: {userInput}")
-        return userInput
-    except sr.UnknownValueError:
-        print("Sorry, I didn't get that.")
-        return ""
-    except sr.RequestError:
-        print("Speech recognition service is down.")
-        return ""
-
-
-while True:
-    if listen().lower() == "hay jarvis":  # Adjust threshold as needed
-        while True:
-            command = listen()
-            if "exit" in command.lower():
-                pyttsx3.speak("Goodbye!")
-                break
-            elif command:
-                response = API.query_ollama(command)
-                print(response)
-                pyttsx3.speak(response)
+on_start()
