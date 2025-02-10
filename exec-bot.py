@@ -42,7 +42,7 @@ def on_start():
         command = listen().lower()  # Assuming listen() is already handling speech recognition
 
         if command == wake_word.lower():  # Exact match for "hey jarvis"
-            print("Wake Word Detected")
+            pyttsx3.speak("Yes Sir!")
             while True:
                 command = listen()
                 if "exit" in command.lower():  # Allow for an exit command
