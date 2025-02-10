@@ -53,6 +53,5 @@ def on_start():
                     pyttsx3.speak(response)
         elif command.lower() == "shut down jarvis":
             exit()
-    on_start()
 
 on_start()
