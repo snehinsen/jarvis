@@ -35,19 +35,14 @@ def save_memory():
 
 
 def query_llm(prompt):
-    memory.extend(memory)  # Load previous conversations
-    memory.append(
-        {
-            "role": "user",
-            "content": prompt,
-        }
-    )
+    memory.extend(memory)
+    memory.append({"role": "user", "content": prompt})
+
     data = {
         "model": "jarvis:latest",
         "messages": memory
     }
-    files = open("tools.json", "rb")
-    print(data)
+
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {LLM_API_KEY}"
@@ -56,26 +51,32 @@ def query_llm(prompt):
     try:
         response = requests.post(f"{URL}/chat/completions", json=data, headers=headers)
         response_json = response.json()
+
         if "choices" in response_json and response_json["choices"]:
-            response = response_json["choices"][0]["message"]["content"]
-            print(response)
-            response = json.loads(response)
-            print(response)
-            toolsList = response["tools"]
-            print(toolsList)
-            ai_response = response["message"]
-            memory.append(
-                {
-                    "role": "assistant",
-                    "content": ai_response
-                }
-            )
+            raw_response = response_json["choices"][0]["message"]["content"]
+            print("🔹 JARVIS Raw Response:", raw_response)
+
+            try:
+                print(f"Raw Response: {raw_response}")
+                response_parsed = json.loads(raw_response)
+            except json.JSONDecodeError as e:
+                print("🚨 JSON Parsing Error:", e)
+                return "Oops! JARVIS sent an invalid response."
+
+            tools_list = response_parsed.get("tools", [])
+            ai_response = response_parsed.get("message", "")
+
+            print("✅ Parsed Tools:", tools_list)
+            print("✅ Parsed Message:", ai_response)
+
+            memory.append({"role": "assistant", "content": ai_response})
             save_memory()
             return ai_response
         else:
-            return "My brain isn't working right now."
+            return "JARVIS didn't respond properly."
+
     except requests.exceptions.RequestException as e:
-        print(f"Error connecting to LLM: {e}")
+        print(f"❌ Error connecting to LLM: {e}")
         return "My brain isn't working right now."
 
 

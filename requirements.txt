@@ -12,3 +12,6 @@ onnxruntime
 pydantic
 bs4
 open-webui
+librosa
+torch
+transformers
