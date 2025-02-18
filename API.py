@@ -6,7 +6,7 @@ import os
 
 
 # API Configuration
-URL = "http://localhost:3000/api"  # CONNECTED BY LOCAL TWINGATE
+URL = "http://localhost:3000/api"
 LLM_API_KEY = ""
 WIT_API_KEY = ""
 MEMORY_FILE = "memory.json"

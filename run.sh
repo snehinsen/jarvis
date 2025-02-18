@@ -6,4 +6,4 @@ if $1 == "-b"
   python exec-bot.py
 else
   python exec.py
-
+fi
