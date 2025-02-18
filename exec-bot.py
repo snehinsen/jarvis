@@ -3,8 +3,11 @@ import openwakeword.utils
 import pyaudio
 import pyttsx3
 from openwakeword.model import Model
+import importlib
 
-openwakeword.utils.download_models()
+# openwakeword.utils.download_models()
+
+# importlib.import_module("web-search")
 
 import API
 from audio import listen
@@ -48,7 +51,7 @@ def on_start():
                 if "exit" in command.lower():  # Allow for an exit command
                     break
                 elif command:
-                    response = API.query_ollama(command)
+                    response = API.query_llm(command)
                     print(response)
                     pyttsx3.speak(response)
         elif command.lower() == "shut down jarvis":

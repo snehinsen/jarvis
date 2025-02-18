@@ -9,3 +9,6 @@ ffmpeg-python
 pyttsx3
 openwakeword
 onnxruntime
+pydantic
+bs4
+open-webui

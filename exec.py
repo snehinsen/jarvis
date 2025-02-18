@@ -45,6 +45,6 @@ while True:
     elif command == "":
         pass
     else:
-        response = API.query_ollama(command)
+        response = API.query_llm(command)
         print(response)
         speak(response)
