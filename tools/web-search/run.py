@@ -10,10 +10,14 @@ class SearchResult(BaseModel):
 class SearchResults(BaseModel):
     results: str
 
-def search(query: str, searxng_url: str = "http://searxng:8080", results: int = 100) -> SearchResults:
+def launch(args: []) -> SearchResults:
+    query = args.get("query")
+    search_url = "http://localhost:5555"
+    results = args.get("responseCount", 100)
+
     try:
         response = requests.get(
-            f"{searxng_url}/search",
+            f"{search_url}/search",
             params={"q": query, "format": "json"},
             headers={"User-Agent": "Mozilla/5.0"},
         )
@@ -30,7 +34,7 @@ def search(query: str, searxng_url: str = "http://searxng:8080", results: int = 
             snippet = result.get("content", "No snippet available")
             link = result.get("url", "No URL available")
             formatted_results += f"{i}. {title}\n   {snippet}\n   URL: {link}\n\n"
-
+        print(formatted_results)
         return SearchResults(results=formatted_results)
     except Exception as e:
         return SearchResults(results=f"An error occurred while searching SearXNG: {str(e)}")

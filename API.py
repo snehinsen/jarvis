@@ -2,24 +2,21 @@ import requests
 import json
 import os
 import re
+
+from faster_whisper import WhisperModel
 from pyht import Client
 from pyht.client import TTSOptions
-from faster_whisper import WhisperModel
 
-# API Configuration
-URL = "http://localhost:3000/api"
-LLM_API_KEY = ""
-WIT_API_KEY = ""
+from audio import fspeak, nspeak
+from run_module import launch as launch_tool
+import dotenv
+dotenv.load_dotenv()
+
+URL = dotenv.get_key(dotenv_path=".env", key_to_get="LLM_API_URL")
+LLM_API_KEY = dotenv.get_key(dotenv_path=".env", key_to_get="LLM_API_KEY")
+WIT_API_KEY = dotenv.get_key(dotenv_path=".env", key_to_get="WIT_API_KEY")
 MEMORY_FILE = "memory.json"
 
-# Load API keys from file
-with open("env.key", "r") as key_file:
-    LLM_API_KEY = key_file.readline().strip()
-    WIT_API_KEY = key_file.readline().strip()
-    print(f"AI API KEY: {LLM_API_KEY}")
-    print(f"WIT: {WIT_API_KEY}")
-
-# Load or create memory file
 if os.path.exists(MEMORY_FILE):
     with open(MEMORY_FILE, "r") as mem_file:
         try:
@@ -28,6 +25,8 @@ if os.path.exists(MEMORY_FILE):
             memory = []
 else:
     memory = []
+
+toolsList = []
 
 def save_memory():
     with open(MEMORY_FILE, "w") as memory_file:
@@ -43,32 +42,78 @@ def extract_json(text):
             return None
     return None
 
-def query_llm(message, error=False, retry_count=0, max_retries=3):
+def get_enabled_tools():
+    enabled_tools = []
+    tools_dir = "./tools"
+
+    if not os.path.exists(tools_dir):
+        print("⚠️ Tools directory does not exist.")
+        return enabled_tools
+
+    for item in os.listdir(tools_dir):
+        tool_path = os.path.join(tools_dir, item)
+        manifest_path = os.path.join(tool_path, "manifest.json")
+
+        if os.path.isdir(tool_path) and os.path.isfile(manifest_path):
+            try:
+                with open(manifest_path, "r") as manifest_file:
+                    manifest = json.load(manifest_file)
+                    if manifest.get("enabled", False):
+                        enabled_tools.append({
+                            "id": item,
+                            "manifest": manifest
+                        })
+            except json.JSONDecodeError:
+                print(f"🚫 Failed to parse manifest for {item}")
+            except Exception as e:
+                print(f"❌ Error reading manifest for {item}: {e}")
+
+    return enabled_tools
+
+
+def query_llm(message, error=False, retry_count=0, max_retries=3, speak_type=1):
+    global toolsList
+    speak = fspeak if speak_type == 1 else nspeak
     if retry_count >= max_retries:
         print("❌ Maximum retry attempts reached. Aborting request.")
-        return "I'm having trouble understanding. Please try again."
+        speak("I'm having trouble understanding. Please try again.")
+        return  # Added early return
 
-    memory.append({"role": "user", "content": message})
-    save_memory()
+    memory.append(
+        {
+            "role": "user",
+            "content": str({
+                "content": message,
+                "from": "system" if error else "user",
+                "profile": {
+                    "name": "sys-profiler" if error else "Snehin Sen",
+                    "gender": "" if error else "male",
+                    "role": "system-execute" if error else "admin/user-client",
+                },
+                "available-tools-by-id": get_enabled_tools()
+            })
+        }
+    )
+    if not error:
+        save_memory()
 
     data = {"model": "jarvis:latest", "messages": memory}
     headers = {"Content-Type": "application/json", "Authorization": f"Bearer {LLM_API_KEY}"}
 
     try:
-        print("Running...")
         response = requests.post(f"{URL}/chat/completions", json=data, headers=headers)
-        response_json = response.json()
+        response = response.json()
         print("Response received")
 
-        if "choices" in response_json and response_json["choices"]:
-            raw_response = response_json["choices"][0]["message"]["content"]
+        if "choices" in response and response["choices"]:
+            raw_response = response["choices"][0]["message"]["content"]
             print("🔹 JARVIS Raw Response:", raw_response)
 
             response_parsed = extract_json(raw_response)
             if not response_parsed:
                 print("🚨 JSON Parsing Error. Retrying...")
                 return query_llm("ERROR: Invalid JSON response!", error=True, retry_count=retry_count + 1)
-
+            speak(response_parsed.get("message", ""))
             memory.append(
                 {
                     "role": "assistant",
@@ -76,13 +121,32 @@ def query_llm(message, error=False, retry_count=0, max_retries=3):
                 }
             )
             save_memory()
-            return response_parsed.get("message", "")
+            if response_parsed.get("tools"):
+                print("🔧 Tools detected in response.")
+                toolsList = response_parsed.get("tools")
+                for tool in toolsList:
+                    tool_vars_all = response_parsed.get("toolVars", {})
+                    toolArgs = tool_vars_all.get(tool, {})
+                    exec_result = launch_tool(tool, toolArgs)
+
+                    manifest_path = os.path.join("./tools", tool, "manifest.json")
+                    if os.path.exists(manifest_path):
+                        try:
+                            with open(manifest_path, "r") as f:
+                                manifest = json.load(f)
+                            if manifest.get("returnsOutput", False):
+                                print(f"🔁 Tool '{tool}' returns output. Re-querying LLM with tool result.")
+                                query_llm(str(exec_result))
+                        except Exception as e:
+                            print(f"⚠️ Failed to read or parse manifest for '{tool}': {e}")
+
         else:
-            return "JARVIS didn't respond properly."
+            speak("System didn't respond properly.")
 
     except requests.exceptions.RequestException as e:
         print(f"❌ Error connecting to LLM: {e}")
-        return "My brain isn't working right now."
+        speak("My brain isn't working right now.")
+
 
 def get_tts_client():
     return Client(
@@ -95,11 +159,6 @@ def get_tts_options():
         voice="s3://voice-cloning-zero-shot/775ae416-49bb-4fb6-bd45-740f205d20a1/jennifersaad/manifest.json"
     )
 
-def tools():
-    toolsList = os.listdir("./tools/")
-    return toolsList
-
-# Load Faster Whisper Model
 model = WhisperModel("small", device="cpu", compute_type="int8")
 
 def transcribe_audio(audio_file):

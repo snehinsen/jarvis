@@ -1,16 +1,7 @@
-import subprocess
-import openwakeword.utils
 import pyaudio
-import pyttsx3
 from openwakeword.model import Model
-import importlib
-
-# openwakeword.utils.download_models()
-
-# importlib.import_module("web-search")
-
 import API
-from audio import listen
+from audio import listen, nspeak
 
 FILE_NAME = "output.mp3"
 
@@ -32,29 +23,20 @@ mic_stream = (
 )
 
 wake_word = "hey jarvis"
-model = Model(
-    [
-        wake_word.replace(" ", "_"),
-    ],
-    inference_framework="onnx"
-)
+
 
 def on_start():
     while True:
-        # Listen for the wake word (exact match)
-        command = listen().lower()  # Assuming listen() is already handling speech recognition
+        command = listen().lower()
 
-        if command == wake_word.lower():  # Exact match for "hey jarvis"
-            pyttsx3.speak("Yes Sir!")
+        if command == wake_word.lower():
+            nspeak("Yes sir?")
             while True:
                 command = listen()
                 if "exit" in command.lower():  # Allow for an exit command
                     break
                 elif command:
-                    response = API.query_llm(command)
-                    print(response)
-                    pyttsx3.speak(response)
-        elif command.lower() == "shut down jarvis":
+                    API.query_llm(command, speak_type=2)
+        elif command == "shut down jarvis":
             exit()
-
 on_start()

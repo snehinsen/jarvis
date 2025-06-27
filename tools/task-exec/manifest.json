@@ -1,0 +1,16 @@
+{
+  "display_name": "Task runner",
+  "description": "Run browser based tasks by asking",
+  "inputs": {
+    "execution": {
+      "type": "string",
+      "optional": false
+    },
+    "shell": {
+      "type": "string",
+      "optional": false
+    }
+  },
+  "hasOutput": true,
+  "enabled": false
+}

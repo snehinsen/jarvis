@@ -1,0 +1,17 @@
+{
+  "display_name": "Web Scraper",
+  "description": "Search the web for any query that needs it",
+  "inputs": {
+    "query": {
+      "type": "string",
+      "optional": false
+    },
+    "responseCount": {
+      "type": "integer",
+      "optional": true,
+      "default": 100
+    }
+  },
+  "hasOutput": true,
+  "enabled": true
+}

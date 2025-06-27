@@ -1,50 +1,30 @@
-import subprocess
-
-import speech_recognition as sr
-
-import ffmpeg
-
+from openwakeword.model import Model
 import API
-from audio import listen
+from audio import listen, fspeak
 
-FILE_NAME = "output.mp3"
+wake_word = "hey jarvis"
 
-
-def speak(text):
-    client = API.get_tts_client()
-    options = API.get_tts_options()
-
-    with open(FILE_NAME, "wb") as audio_file:
-        for chunk in client.tts(
-                text=text,
-                options=options,
-                voice_engine='PlayDialog-http'):
-            audio_file.write(chunk)
-
-    print("Playing response...")
-
-    # Play audio using ffmpeg's ffplay
-    (subprocess
-        .run(
-            [
-                "./ffmpeg/win/bin/ffplay.exe",
-                "-nodisp",
-                "-autoexit",
-                FILE_NAME
-            ],
-            stdout=subprocess.DEVNULL
-        )
-    )
+model = Model(
+    [
+        wake_word.replace(" ", "_"),
+    ],
+    inference_framework="onnx"
+)
 
 
-while True:
-    command = listen()
-    if "exit" in command:
-        speak("Goodbye!")
-        exit()
-    elif command == "":
-        pass
-    else:
-        response = API.query_llm(command)
-        print(response)
-        speak(response)
+def on_start():
+    while True:
+        command = listen().lower()
+
+        if command == wake_word.lower():
+            fspeak("Yes Sir!")
+            while True:
+                command = listen()
+                if "exit" in command.lower():
+                    exit()
+                elif command:
+                    API.query_llm(command)
+        elif command == "shut down jarvis":
+            exit()
+
+on_start()
