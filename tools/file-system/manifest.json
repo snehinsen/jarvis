@@ -1,0 +1,23 @@
+{
+  "display_name": "File System",
+  "description": "CRUD files",
+  "inputs": {
+    "file": {
+      "type": "string",
+      "optional": false,
+      "descriptor": "The name of file or folder"
+    },
+    "operation": {
+      "type": "string",
+      "optional": false,
+      "valid-options": "read | create | edit | move | delete"
+    },
+    "write-content": {
+      "type": "string",
+      "optional": true,
+      "descriptor": "Content that will replace the original content of a selected file. Used only when using the write option"
+    }
+  },
+  "hasOutput": true,
+  "enabled": true
+}

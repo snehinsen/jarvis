@@ -1,0 +1,14 @@
+{
+  "display_name": "Program Runner",
+  "description": "A tool that runs commands and or scripts/programs. Any executable file is runnable by this tool provided hte write command and properties.",
+  "inputs": {
+    "command": {
+      "type": "string",
+      "optional": false,
+      "descriptor": "command to execute or script/program file to run, requires full path to file if using scripts or program files. Files like .jar are program files"
+    }
+  },
+  "hasOutput": true,
+  "enabled": true,
+  "output-descriptor": "Any available logs from the subprocess after it executes and exits"
+}

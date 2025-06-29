@@ -10,6 +10,7 @@ from pyht.client import TTSOptions
 from audio import fspeak, nspeak
 from run_module import launch as launch_tool
 import dotenv
+
 dotenv.load_dotenv()
 
 URL = dotenv.get_key(dotenv_path=".env", key_to_get="LLM_API_URL")
@@ -28,9 +29,11 @@ else:
 
 toolsList = []
 
+
 def save_memory():
     with open(MEMORY_FILE, "w") as memory_file:
         json.dump(memory, memory_file)
+
 
 def extract_json(text):
     json_pattern = re.search(r'\{.*\}', text, re.DOTALL)
@@ -41,6 +44,7 @@ def extract_json(text):
         except json.JSONDecodeError:
             return None
     return None
+
 
 def get_enabled_tools():
     enabled_tools = []
@@ -75,9 +79,8 @@ def query_llm(message, error=False, retry_count=0, max_retries=3, speak_type=1):
     global toolsList
     speak = fspeak if speak_type == 1 else nspeak
     if retry_count >= max_retries:
-        print("❌ Maximum retry attempts reached. Aborting request.")
         speak("I'm having trouble understanding. Please try again.")
-        return  # Added early return
+        return
 
     memory.append(
         {
@@ -94,8 +97,8 @@ def query_llm(message, error=False, retry_count=0, max_retries=3, speak_type=1):
             })
         }
     )
-    if not error:
-        save_memory()
+
+    save_memory()
 
     data = {"model": "jarvis:latest", "messages": memory}
     headers = {"Content-Type": "application/json", "Authorization": f"Bearer {LLM_API_KEY}"}
@@ -112,7 +115,8 @@ def query_llm(message, error=False, retry_count=0, max_retries=3, speak_type=1):
             response_parsed = extract_json(raw_response)
             if not response_parsed:
                 print("🚨 JSON Parsing Error. Retrying...")
-                return query_llm("ERROR: Invalid JSON response!", error=True, retry_count=retry_count + 1)
+                query_llm("ERROR: Invalid JSON response!", error=True, retry_count=retry_count + 1,
+                          speak_type=speak_type)
             speak(response_parsed.get("message", ""))
             memory.append(
                 {
@@ -128,18 +132,7 @@ def query_llm(message, error=False, retry_count=0, max_retries=3, speak_type=1):
                     tool_vars_all = response_parsed.get("toolVars", {})
                     toolArgs = tool_vars_all.get(tool, {})
                     exec_result = launch_tool(tool, toolArgs)
-
-                    manifest_path = os.path.join("./tools", tool, "manifest.json")
-                    if os.path.exists(manifest_path):
-                        try:
-                            with open(manifest_path, "r") as f:
-                                manifest = json.load(f)
-                            if manifest.get("returnsOutput", False):
-                                print(f"🔁 Tool '{tool}' returns output. Re-querying LLM with tool result.")
-                                query_llm(str(exec_result))
-                        except Exception as e:
-                            print(f"⚠️ Failed to read or parse manifest for '{tool}': {e}")
-
+                    query_llm(str(exec_result), speak_type=speak_type)
         else:
             speak("System didn't respond properly.")
 
@@ -154,12 +147,15 @@ def get_tts_client():
         api_key="f6359a724f964eceae9ef293eaab85d9"
     )
 
+
 def get_tts_options():
     return TTSOptions(
         voice="s3://voice-cloning-zero-shot/775ae416-49bb-4fb6-bd45-740f205d20a1/jennifersaad/manifest.json"
     )
 
+
 model = WhisperModel("small", device="cpu", compute_type="int8")
+
 
 def transcribe_audio(audio_file):
     segments, _ = model.transcribe(audio_file)
