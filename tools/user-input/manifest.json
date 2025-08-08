@@ -1,0 +1,7 @@
+{
+  "display_name": "User Input",
+  "description": "Input correction for anything that may not be properly spelled by STT system. Used for names of things and similar.",
+  "inputs": {},
+  "hasOutput": true,
+  "enabled": true
+}

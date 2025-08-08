@@ -1,6 +1,12 @@
+import subprocess
+
+from gtts import gTTS
 import pyttsx3
 import speech_recognition as sr
+from ibm_watsonx_ai.libs.ibmfl.party_env_validator import stderr
+
 import API
+
 
 def listen():
     recognizer = sr.Recognizer()
@@ -19,20 +25,15 @@ def listen():
         print("Speech recognition service is down.")
         return ""
 
-def nspeak(message: str):
-    pyttsx3.speak(message)
+
+def nspeak(text: str):
+    pyttsx3.speak(text)
+
 
 def fspeak(text):
     FILE_NAME = "output.mp3"
-    client = API.get_tts_client()
-    options = API.get_tts_options()
-
-    with open(FILE_NAME, "wb") as audio_file:
-        for chunk in client.tts(
-                text=text,
-                options=options,
-                voice_engine='PlayDialog-http'):
-            audio_file.write(chunk)
+    tts = gTTS(text)
+    tts.save(FILE_NAME)
 
     print("Playing response...")
 
@@ -40,11 +41,11 @@ def fspeak(text):
     (subprocess
     .run(
         [
-            "./ffmpeg/win/bin/ffplay.exe",
+            "ffplay",
             "-nodisp",
             "-autoexit",
             FILE_NAME
         ],
-        stdout=subprocess.DEVNULL
-    )
-    )
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL
+    ))

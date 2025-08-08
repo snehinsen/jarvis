@@ -4,12 +4,13 @@ from audio import listen, fspeak
 
 wake_word = "hey jarvis"
 
-model = Model(
-    [
-        wake_word.replace(" ", "_"),
-    ],
-    inference_framework="onnx"
-)
+
+# model = Model(
+#     [
+#         wake_word.replace(" ", "_"),
+#     ],
+#     inference_framework="onnx"
+# )
 
 
 def on_start():

@@ -87,11 +87,11 @@ def query_llm(message, error=False, retry_count=0, max_retries=3, speak_type=1):
             "role": "user",
             "content": str({
                 "content": message,
-                "from": "system" if error else "user",
+                "from": "system" if error | message.__contains__("(From tool") else "user",
                 "profile": {
-                    "name": "sys-profiler" if error else "Snehin Sen",
-                    "gender": "" if error else "male",
-                    "role": "system-execute" if error else "admin/user-client",
+                    "name": "sys-profiler" if error | message.__contains__("(From tool") else "Snehin Sen",
+                    "gender": "" if error | message.__contains__("(From tool") else "male",
+                    "role": "system-execute" if error | message.__contains__("(From tool") else "admin/user-client",
                 },
                 "available-tools-by-id": get_enabled_tools()
             })
@@ -115,9 +115,10 @@ def query_llm(message, error=False, retry_count=0, max_retries=3, speak_type=1):
             response_parsed = extract_json(raw_response)
             if not response_parsed:
                 print("🚨 JSON Parsing Error. Retrying...")
-                query_llm("ERROR: Invalid JSON response!", error=True, retry_count=retry_count + 1,
+                query_llm("ERROR: Invalid JSON response!",
+                          error=True,
+                          retry_count=retry_count + 1,
                           speak_type=speak_type)
-            speak(response_parsed.get("message", ""))
             memory.append(
                 {
                     "role": "assistant",
@@ -125,6 +126,7 @@ def query_llm(message, error=False, retry_count=0, max_retries=3, speak_type=1):
                 }
             )
             save_memory()
+            speak(response_parsed.get("message", ""))
             if response_parsed.get("tools"):
                 print("🔧 Tools detected in response.")
                 toolsList = response_parsed.get("tools")
@@ -132,9 +134,11 @@ def query_llm(message, error=False, retry_count=0, max_retries=3, speak_type=1):
                     tool_vars_all = response_parsed.get("toolVars", {})
                     toolArgs = tool_vars_all.get(tool, {})
                     exec_result = launch_tool(tool, toolArgs)
-                    query_llm(str(exec_result), speak_type=speak_type)
+                    print(exec_result)
+                    query_llm(str(f"(From tool:{tool})\n{exec_result}"), speak_type=speak_type)
+
         else:
-            speak("System didn't respond properly.")
+            nspeak("System didn't respond properly.")
 
     except requests.exceptions.RequestException as e:
         print(f"❌ Error connecting to LLM: {e}")
@@ -144,7 +148,7 @@ def query_llm(message, error=False, retry_count=0, max_retries=3, speak_type=1):
 def get_tts_client():
     return Client(
         user_id="qhgqjWCZF2M3DckizpcckXerJQB3",
-        api_key="f6359a724f964eceae9ef293eaab85d9"
+        api_key="ak-1a4dcf00071d495f921b5b0f51341b95"
     )
 
 

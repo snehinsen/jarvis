@@ -1,40 +1,68 @@
-import requests
+import os
+import shutil
 from pydantic import BaseModel
 
-class SearchResult(BaseModel):
-    index: int
-    title: str
-    content: str
-    url: str
+class FileOperationResult(BaseModel):
+    success: bool
+    message: str
+    content: str | None = None
 
-class SearchResults(BaseModel):
-    results: str
-
-def launch(args: []) -> SearchResults:
-    query = args.get("query")
-    search_url = "http://localhost:5555"
-    results = args.get("responseCount", 100)
+def launch(args: dict) -> FileOperationResult:
+    file_path = f"fs/{args.get("file")}"
+    operation = args.get("operation")
+    write_content = args.get("write-content")
+    new_path = args.get("new-path")
 
     try:
-        response = requests.get(
-            f"{search_url}/search",
-            params={"q": query, "format": "json"},
-            headers={"User-Agent": "Mozilla/5.0"},
-        )
-        response.raise_for_status()
-        search_results = response.json().get("results", [])
+        if not file_path:
+            return FileOperationResult(success=False, message="Missing required argument: file")
 
-        if not search_results:
-            return SearchResults(results=f"No results found!")
+        if not operation:
+            return FileOperationResult(success=False, message="Missing required argument: operation")
 
-        formatted_results = ""
+        if operation == "list-dir":
+            if not os.path.isdir(file_path):
+                return FileOperationResult(success=False, message=f"Folder not found: {file_path}")
+            content = os.listdir(file_path)
+            return FileOperationResult(success=True, message="Files list.", content=content)
 
-        for i, result in enumerate(search_results[:results], 1):
-            title = result.get("title", "No title")
-            snippet = result.get("content", "No snippet available")
-            link = result.get("url", "No URL available")
-            formatted_results += f"{i}. {title}\n   {snippet}\n   URL: {link}\n\n"
-        print(formatted_results)
-        return SearchResults(results=formatted_results)
+        if operation == "read":
+            if not os.path.isfile(file_path):
+                return FileOperationResult(success=False, message=f"File not found: {file_path}")
+            with open(file_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            return FileOperationResult(success=True, message="File read successfully.", content=content)
+
+        elif operation == "create":
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(write_content or "")
+            return FileOperationResult(success=True, message=f"File created: {file_path}")
+
+        elif operation == "edit":
+            if not os.path.isfile(file_path):
+                return FileOperationResult(success=False, message=f"File not found for editing: {file_path}")
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(write_content or "")
+            return FileOperationResult(success=True, message=f"File edited: {file_path}")
+
+        elif operation == "move":
+            if not new_path:
+                return FileOperationResult(success=False, message="Missing required argument: new-path for move operation")
+            shutil.move(file_path, new_path)
+            return FileOperationResult(success=True, message=f"File moved from {file_path} to {new_path}")
+
+        elif operation == "delete":
+            if os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+                return FileOperationResult(success=True, message=f"Folder deleted: {file_path}")
+            elif os.path.isfile(file_path):
+                os.remove(file_path)
+                return FileOperationResult(success=True, message=f"File deleted: {file_path}")
+            else:
+                return FileOperationResult(success=False, message=f"Path not found: {file_path}")
+
+        else:
+            return FileOperationResult(success=False, message=f"Unknown operation: {operation}")
+
     except Exception as e:
-        return SearchResults(results=f"An error occurred while searching SearXNG: {str(e)}")
+        return FileOperationResult(success=False, message=f"Error during operation: {str(e)}")
