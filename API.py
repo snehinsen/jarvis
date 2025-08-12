@@ -106,7 +106,6 @@ def query_llm(message, error=False, retry_count=0, max_retries=3, speak_type=1):
     try:
         response = requests.post(f"{URL}/chat/completions", json=data, headers=headers)
         response = response.json()
-        print("Response received")
 
         if "choices" in response and response["choices"]:
             raw_response = response["choices"][0]["message"]["content"]
