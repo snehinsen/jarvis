@@ -3,7 +3,6 @@ import subprocess
 from gtts import gTTS
 import pyttsx3
 import speech_recognition as sr
-from ibm_watsonx_ai.libs.ibmfl.party_env_validator import stderr
 
 import API
 
@@ -31,7 +30,7 @@ def nspeak(text: str):
 
 
 def fspeak(text):
-    FILE_NAME = "output.mp3"
+    FILE_NAME = "./output.mp3"
     tts = gTTS(text)
     tts.save(FILE_NAME)
 
@@ -44,8 +43,8 @@ def fspeak(text):
             "ffplay",
             "-nodisp",
             "-autoexit",
-            FILE_NAME
+            f"{FILE_NAME}"
         ],
         stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL
+        stderr=subprocess.STD_ERROR_HANDLE
     ))

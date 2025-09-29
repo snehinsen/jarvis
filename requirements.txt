@@ -1,30 +1,36 @@
+# --- Core Speech-to-Text (STT) ---
 SpeechRecognition
-pydub
-requests
-pyaudio
-numpy
 sounddevice
-pyht
-ffmpeg-python
-pyttsx3
-openwakeword
-onnxruntime
-pydantic
-bs4
+numpy
+faster-whisper
 librosa
 torch
 transformers
-browser-use
-faster-whisper
-homeassistant
-dotenv
-controlnet_aux
-mediapipe
-cuda-python
+openwakeword
+onnxruntime
 onnx
 onnx-graphsurgeon
 polygraphy
 nvtx
-langchain_openai
-langchain_google_genai
+
+# Optional: PyAudio for mic input (fallback, Windows/Linux)
+pyaudio; platform_system != "Darwin"  # avoid on macOS (painful there)
+
+# --- Text-to-Speech (TTS) ---
+pyttsx3
 gtts
+pyht
+pydub
+ffmpeg-python
+
+# --- AI / Brain ---
+browser-use
+pydantic
+requests
+dotenv
+langchain_openai
+
+# --- Extras ---
+controlnet_aux
+mediapipe
+bs4

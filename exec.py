@@ -1,8 +1,8 @@
-from openwakeword.model import Model
+# from openwakeword.model import Model
 import API
 from audio import listen, fspeak
 
-wake_word = "hey jarvis"
+wake_word = "hey severus"
 
 
 # model = Model(

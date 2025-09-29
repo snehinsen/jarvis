@@ -4,8 +4,8 @@ import os
 import re
 
 from faster_whisper import WhisperModel
-from pyht import Client
-from pyht.client import TTSOptions
+# from pyht import Client
+# from pyht.client import TTSOptions
 
 from audio import fspeak, nspeak
 from run_module import launch as launch_tool
@@ -17,7 +17,7 @@ URL = dotenv.get_key(dotenv_path=".env", key_to_get="LLM_API_URL")
 LLM_API_KEY = dotenv.get_key(dotenv_path=".env", key_to_get="LLM_API_KEY")
 WIT_API_KEY = dotenv.get_key(dotenv_path=".env", key_to_get="WIT_API_KEY")
 MEMORY_FILE = "memory.json"
-
+memory = []
 if os.path.exists(MEMORY_FILE):
     with open(MEMORY_FILE, "r") as mem_file:
         try:
@@ -100,13 +100,12 @@ def query_llm(message, error=False, retry_count=0, max_retries=3, speak_type=1):
 
     save_memory()
 
-    data = {"model": "jarvis:latest", "messages": memory}
+    data = {"model": "jarvis", "messages": memory}
     headers = {"Content-Type": "application/json", "Authorization": f"Bearer {LLM_API_KEY}"}
 
     try:
-        response = requests.post(f"{URL}/chat/completions", json=data, headers=headers)
-        response = response.json()
-
+        response = requests.post(f"{URL}/chat/completions", json=data, headers=headers).json()
+        print(response)
         if "choices" in response and response["choices"]:
             raw_response = response["choices"][0]["message"]["content"]
             print("🔹 JARVIS Raw Response:", raw_response)
@@ -135,7 +134,6 @@ def query_llm(message, error=False, retry_count=0, max_retries=3, speak_type=1):
                     exec_result = launch_tool(tool, toolArgs)
                     print(exec_result)
                     query_llm(str(f"(From tool:{tool})\n{exec_result}"), speak_type=speak_type)
-
         else:
             nspeak("System didn't respond properly.")
 
@@ -144,18 +142,18 @@ def query_llm(message, error=False, retry_count=0, max_retries=3, speak_type=1):
         speak("My brain isn't working right now.")
 
 
-def get_tts_client():
-    return Client(
-        user_id="qhgqjWCZF2M3DckizpcckXerJQB3",
-        api_key="ak-1a4dcf00071d495f921b5b0f51341b95"
-    )
-
-
-def get_tts_options():
-    return TTSOptions(
-        voice="s3://voice-cloning-zero-shot/775ae416-49bb-4fb6-bd45-740f205d20a1/jennifersaad/manifest.json"
-    )
-
+# def get_tts_client():
+#     return Client(
+#         user_id="qhgqjWCZF2M3DckizpcckXerJQB3",
+#         api_key="ak-1a4dcf00071d495f921b5b0f51341b95"
+#     )
+#
+# #
+# # def get_tts_options():
+# #     return TTSOptions(
+# #         voice="s3://voice-cloning-zero-shot/775ae416-49bb-4fb6-bd45-740f205d20a1/jennifersaad/manifest.json"
+# #     )
+#
 
 model = WhisperModel("small", device="cpu", compute_type="int8")
 
